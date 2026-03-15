@@ -244,9 +244,12 @@ def setup_music_commands(bot):
 
     AUTO_DISCONNECT_SECONDS = 30
 
-    @bot.event
-    async def on_voice_state_update(member, before, after):
+    @bot.listen("on_voice_state_update")
+    async def music_on_voice_state_update(member, before, after):
         """ボイスチャンネルにBotだけになったら自動切断"""
+        if member.id == bot.user.id:
+            return
+
         guild_id = member.guild.id
         manager = music_managers.get(guild_id)
         if not manager:
@@ -256,8 +259,21 @@ def setup_music_commands(bot):
         if not vc or not vc.is_connected():
             return
 
-        channel = vc.channel
-        humans = [m for m in channel.members if not m.bot]
+        bot_channel = vc.channel
+
+        # ユーザーがBotのいるチャンネルから離れた場合のみチェック
+        left_bot_channel = (before.channel and before.channel.id == bot_channel.id
+                            and (not after.channel or after.channel.id != bot_channel.id))
+
+        if not left_bot_channel:
+            # 誰かがBotのチャンネルに来た場合、切断タイマーをキャンセル
+            if after.channel and after.channel.id == bot_channel.id:
+                if manager.disconnect_task:
+                    manager.disconnect_task.cancel()
+                    manager.disconnect_task = None
+            return
+
+        humans = [m for m in bot_channel.members if not m.bot]
 
         if len(humans) == 0:
             async def _disconnect():
@@ -273,10 +289,6 @@ def setup_music_commands(bot):
             if manager.disconnect_task:
                 manager.disconnect_task.cancel()
             manager.disconnect_task = asyncio.create_task(_disconnect())
-        else:
-            if manager.disconnect_task:
-                manager.disconnect_task.cancel()
-                manager.disconnect_task = None
 
     @bot.tree.command(name="join", description="ボイスチャンネルに参加")
     async def join_command(interaction: discord.Interaction):
