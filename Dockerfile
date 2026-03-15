@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get install -y --no-install-recommends ffmpeg build-essential libffi-dev && \
     pip install --no-cache-dir yt-dlp && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
