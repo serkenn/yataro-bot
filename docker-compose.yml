@@ -1,0 +1,7 @@
+services:
+  yataro-bot:
+    build: .
+    container_name: yataro-bot
+    restart: unless-stopped
+    env_file:
+      - .env
