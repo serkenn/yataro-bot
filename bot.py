@@ -5,6 +5,7 @@ import os
 import asyncio
 from datetime import datetime, timezone
 from music import setup_music_commands
+from news import setup_news_commands
 
 # 設定
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -232,6 +233,7 @@ async def vote_status_command(interaction: discord.Interaction):
 
 
 setup_music_commands(bot)
+setup_news_commands(bot)
 
 if __name__ == "__main__":
     if not TOKEN:
