@@ -296,6 +296,22 @@ def setup_music_commands(bot):
             await interaction.response.send_message("⚠️ 先にボイスチャンネルに参加してください。", ephemeral=True)
             return
 
+        # 既存の接続をクリーンアップ
+        manager = music_managers.get(interaction.guild.id)
+        if manager:
+            manager.stop()
+            try:
+                await manager.voice_client.disconnect(force=True)
+            except Exception:
+                pass
+            del music_managers[interaction.guild.id]
+
+        if interaction.guild.voice_client:
+            try:
+                await interaction.guild.voice_client.disconnect(force=True)
+            except Exception:
+                pass
+
         channel = interaction.user.voice.channel
         vc = await channel.connect()
         music_managers[interaction.guild.id] = GuildMusicManager(vc, interaction.channel)
